@@ -92,13 +92,17 @@ while True:
 
             face_names.append(name)
         if("Champ" in face_names):
-            peri.set_led(1,1)
+            mcu.usb_write(0, value=1, index=0)
+            mcu.usb_write(3, value=90)
+            # peri.set_led(1,1)
         else:
-            peri.set_led(1,0)
-        if("Stamp" in face_names):
-            peri.set_led(0,1)
-        else:
-            peri.set_led(0,0)
+            mcu.usb_write(0, value=0, index=0)
+            mcu.usb_write(3, value=0)
+            # peri.set_led(1,0)
+        # if("Stamp" in face_names):
+        #     peri.set_led(0,1)
+        # else:
+        #     peri.set_led(0,0)
         print(face_names)
     process_this_frame = not process_this_frame
 
