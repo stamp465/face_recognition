@@ -7,6 +7,7 @@ Servo myservo;
 #define RQ_GET_PW 2
 #define RQ_RESULT 4
 #define RQ_SET_SERVO 3
+#define RQ_GET_PW2 5
 
 #define button_sw !(digitalRead(PIN_PB0)&&digitalRead(PIN_PB1)&&digitalRead(PIN_PB2)&&digitalRead(PIN_PB3))
 
@@ -17,6 +18,8 @@ int noww = 0;
 bool set_start = false;
 bool submit = false;
 bool door = false;
+static uint8_t pw = 0;
+static uint8_t n_pw = 0;
 
 usbMsgLen_t usbFunctionSetup(uint8_t data[8])
 {
@@ -67,6 +70,18 @@ usbMsgLen_t usbFunctionSetup(uint8_t data[8])
         }
         return sizeof(password);
     }
+    else if (rq->bRequest == RQ_GET_PW2){
+        if(submit){
+            usbMsgPtr = &pw;
+            //noww = 0;
+            submit = false;
+            //pw = 9;
+        }
+        else{
+            usbMsgPtr = &n_pw;
+        }
+        return 1;
+    }
     else if (rq->bRequest == RQ_SET_SERVO){
         uint8_t degree = rq->wValue.bytes[0];
         myservo.write(degree);
@@ -83,8 +98,10 @@ void setup()
     pinMode(PIN_PB1,INPUT_PULLUP);
     pinMode(PIN_PB2,INPUT_PULLUP);
     pinMode(PIN_PB3,INPUT_PULLUP);
-    myservo.attach(PIN_PB0);
-    myservo.write(0);
+    pinMode(PIN_PC1,OUTPUT);
+    pinMode(PIN_PC0,OUTPUT);
+    //myservo.attach(PIN_PB0);
+    //myservo.write(0);
     delay(1000);
 
     int i;
@@ -111,7 +128,7 @@ void loop()
     delay(1000);        // หน่วงเวลา 1000ms
     */
 
-    if(set_start && !submit){
+    /*if(set_start && !submit){
         usbPoll();
         if(button_sw){
             //digitalWrite(PIN_PD3, HIGH); //remove this line when lcd prompt
@@ -133,6 +150,38 @@ void loop()
             else if(!digitalRead(PIN_PB3) ){ //if ENTER pressed and password is full
                 submit=true;
                 while(!digitalRead(PIN_PB3));
+            }
+        }
+    }*/
+
+    if(set_start){
+        usbPoll();
+        if(button_sw){
+            //digitalWrite(PIN_PD3, HIGH); //remove this line when lcd prompt
+            //delay(5); //remove this line when lcd prompt
+            if(!digitalRead(PIN_PB0)){ //if A pressed and password not full
+                pw = 3;
+                digitalWrite(PIN_PC0,1);
+                while(!digitalRead(PIN_PB0));
+                digitalWrite(PIN_PC0,0);
+            }
+            else if(!digitalRead(PIN_PB1) ){ //if B pressed and password not full
+                pw = 4;
+                digitalWrite(PIN_PC1,1);
+                while(!digitalRead(PIN_PB1));
+                digitalWrite(PIN_PC1,0);
+            }
+            else if(!digitalRead(PIN_PB2) ){ //if B pressed and password not full
+                pw = 9;
+                //digitalWrite(PIN_PC1,1);
+                while(!digitalRead(PIN_PB2));
+                //digitalWrite(PIN_PC1,0);
+            }
+            else if(!digitalRead(PIN_PB3) ){ //if ENTER pressed and password is full
+                submit=true;
+                digitalWrite(PIN_PC2,1);
+                while(!digitalRead(PIN_PB3));
+                digitalWrite(PIN_PC2,0);
             }
         }
     }
