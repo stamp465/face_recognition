@@ -1,6 +1,7 @@
 import face_recognition
 import cv2
 import numpy as np
+import time
 
 from practicum import find_mcu_boards, McuBoard, PeriBoard
 devices = find_mcu_boards()
@@ -75,7 +76,7 @@ while True:
             # See if the face is a match for the known face(s)
             matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
             name = "Unknown"
-            peri.set_led(1,0)
+            # peri.set_led(1,0)
 
             # # If a match was found in known_face_encodings, just use the first one.
             # if True in matches:
@@ -92,12 +93,39 @@ while True:
 
             face_names.append(name)
         if("Champ" in face_names):
-            mcu.usb_write(0, value=1, index=0)
-            mcu.usb_write(3, value=90)
+            # mcu.usb_write(0, value=1, index=0)
+            # mcu.usb_write(3, value=90)
             # peri.set_led(1,1)
-        else:
-            mcu.usb_write(0, value=0, index=0)
-            mcu.usb_write(3, value=0)
+
+            mcu.usb_write(1, value=1)         # set start
+            timeout = 150           # 150 sec
+            start_time = time.time()
+            
+            while time.time() < start_time + timeout:
+                tmp = mcu.usb_read(2, length=4)
+                read_hardware_password = ""
+                print(tmp)
+                for i in tmp:
+                    read_hardware_password = read_hardware_password + str(i)
+
+                print(read_hardware_password)
+
+                # if read_hardware_password == "0000" :
+                #     pass
+                # elif read_hardware_password == "1212" :
+                #     mcu.usb_write(4, value=1) 
+                #     break
+                # else :
+                #     mcu.usb_write(4, value=0) 
+                #     break
+                time.sleep(1)       # sleep 5 sec
+            
+            mcu.usb_write(1, value=1)         # set end
+            
+
+        #else:
+            # mcu.usb_write(0, value=0, index=0)
+            # mcu.usb_write(3, value=0)
             # peri.set_led(1,0)
         # if("Stamp" in face_names):
         #     peri.set_led(0,1)
