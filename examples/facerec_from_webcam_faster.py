@@ -2,6 +2,11 @@ import face_recognition
 import cv2
 import numpy as np
 
+from practicum import find_mcu_boards, McuBoard, PeriBoard
+devices = find_mcu_boards()
+mcu = McuBoard(devices[0])
+peri = PeriBoard(mcu)
+
 # This is a demo of running face recognition on live video from your webcam. It's a little more complicated than the
 # other example, but it includes some basic performance tweaks to make things run a lot faster:
 #   1. Process each video frame at 1/4 resolution (though still display it at full resolution)
@@ -22,14 +27,25 @@ obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
 biden_image = face_recognition.load_image_file("biden.jpg")
 biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
 
+champ_image = face_recognition.load_image_file("champp.jpg")
+champ_face_encoding = face_recognition.face_encodings(champ_image)[0]
+
+stamp_image = face_recognition.load_image_file("stamp.jpg")
+stamp_face_encoding = face_recognition.face_encodings(stamp_image)[0]
+
+
 # Create arrays of known face encodings and their names
 known_face_encodings = [
     obama_face_encoding,
-    biden_face_encoding
+    biden_face_encoding,
+    champ_face_encoding,
+    stamp_face_encoding
 ]
 known_face_names = [
     "Barack Obama",
-    "Joe Biden"
+    "Joe Biden",
+    "Champ",
+    "Stamp"
 ]
 
 # Initialize some variables
@@ -59,6 +75,7 @@ while True:
             # See if the face is a match for the known face(s)
             matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
             name = "Unknown"
+            peri.set_led(1,0)
 
             # # If a match was found in known_face_encodings, just use the first one.
             # if True in matches:
@@ -71,8 +88,18 @@ while True:
             if matches[best_match_index]:
                 name = known_face_names[best_match_index]
 
-            face_names.append(name)
 
+
+            face_names.append(name)
+        if("Champ" in face_names):
+            peri.set_led(1,1)
+        else:
+            peri.set_led(1,0)
+        if("Stamp" in face_names):
+            peri.set_led(0,1)
+        else:
+            peri.set_led(0,0)
+        print(face_names)
     process_this_frame = not process_this_frame
 
 
