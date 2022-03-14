@@ -111,18 +111,19 @@ while True:
                     read_hardware_password = read_hardware_password + str(i)
                 print(read_hardware_password)
 
-                '''if read_hardware_password == "0000" :
+                if read_hardware_password == "0000" :
                     pass
-                elif read_hardware_password == "1212" :
-                    mcu.usb_write(4, value=1) 
+                elif read_hardware_password == "4444" :
+                    print("FUCK")
+                    mcu.usb_write(3, value=1) 
                     break
                 else :
-                    mcu.usb_write(4, value=0) 
-                    break
-                '''
+                    print("SIAO")
+                    mcu.usb_write(3, value=0) 
+                
                 time.sleep(1)       # sleep 5 sec
             
-            mcu.usb_write(1, value=1)         # set end
+            mcu.usb_write(1, value=0)         # set end
             
 
         #else:
