@@ -13,7 +13,7 @@ Servo myservo;
 
 uint8_t password[8];
 uint8_t password_notsubmit[8];
-int pass_length = 4;
+int pass_length = 10;
 int noww = 0;
 bool set_start = false;
 bool submit = false;
@@ -64,6 +64,7 @@ usbMsgLen_t usbFunctionSetup(uint8_t data[8])
         if(submit){
             usbMsgPtr = (uint8_t*) &password;
             //noww = 0;
+            submit = false;
         }
         else{
             usbMsgPtr = (uint8_t*) &password_notsubmit;
@@ -128,33 +129,42 @@ void loop()
     delay(1000);        // หน่วงเวลา 1000ms
     */
 
-    /*if(set_start && !submit){
+    if(set_start){
         usbPoll();
         if(button_sw){
             //digitalWrite(PIN_PD3, HIGH); //remove this line when lcd prompt
             //delay(5); //remove this line when lcd prompt
-            if(!digitalRead(PIN_PB0) && noww<=pass_length){ //if A pressed and password not full
-                password[noww]=1;
-                noww++;
+            if(!digitalRead(PIN_PB0) && noww < pass_length ){ //if A pressed and password not full
+                password[noww] = 3;
+                noww ++;
+                digitalWrite(PIN_PC0,1);
                 while(!digitalRead(PIN_PB0));
+                digitalWrite(PIN_PC0,0);
             }
-            else if(!digitalRead(PIN_PB1) && noww<=pass_length){ //if B pressed and password not full
-                password[noww]=2;
-                noww++;
+            else if(!digitalRead(PIN_PB1) && noww < pass_length ){ //if B pressed and password not full
+                password[noww] = 4;
+                noww ++;
+                digitalWrite(PIN_PC1,1);
                 while(!digitalRead(PIN_PB1));
+                digitalWrite(PIN_PC1,0);
             }
-            else if(!digitalRead(PIN_PB2) && noww>0){ //if BACK pressed and password not blank
-                noww--;
+            else if(!digitalRead(PIN_PB2) && noww > 0){ //if B pressed and password not full
+                password[noww] = 0;
+                noww --;
+                //digitalWrite(PIN_PC1,1);
                 while(!digitalRead(PIN_PB2));
+                //digitalWrite(PIN_PC1,0);
             }
             else if(!digitalRead(PIN_PB3) ){ //if ENTER pressed and password is full
                 submit=true;
+                digitalWrite(PIN_PC2,1);
                 while(!digitalRead(PIN_PB3));
+                digitalWrite(PIN_PC2,0);
             }
         }
-    }*/
+    }
 
-    if(set_start){
+    /*if(set_start){
         usbPoll();
         if(button_sw){
             //digitalWrite(PIN_PD3, HIGH); //remove this line when lcd prompt
@@ -184,5 +194,5 @@ void loop()
                 digitalWrite(PIN_PC2,0);
             }
         }
-    }
+    }*/
 }
