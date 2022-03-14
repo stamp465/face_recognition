@@ -101,26 +101,25 @@ while True:
             timeout = 150           # 150 sec
             start_time = time.time()
             
-            read_hardware_password = ""
+            
             while time.time() < start_time + timeout:
-                tmp = mcu.usb_read(5, length=1)
-                print(tmp)
-                if str(tmp[0]) != "0":
-                    if str(tmp[0]) != "9":
-                        read_hardware_password = read_hardware_password + str(tmp[0])
-                    else:
-                        read_hardware_password = read_hardware_password[:-1]
+                tmp = mcu.usb_read(2, length=10)
                 
+                read_hardware_password = ""
+                print(tmp)
+                for i in tmp:
+                    read_hardware_password = read_hardware_password + str(i)
                 print(read_hardware_password)
 
-                # if read_hardware_password == "0000" :
-                #     pass
-                # elif read_hardware_password == "1212" :
-                #     mcu.usb_write(4, value=1) 
-                #     break
-                # else :
-                #     mcu.usb_write(4, value=0) 
-                #     break
+                '''if read_hardware_password == "0000" :
+                    pass
+                elif read_hardware_password == "1212" :
+                    mcu.usb_write(4, value=1) 
+                    break
+                else :
+                    mcu.usb_write(4, value=0) 
+                    break
+                '''
                 time.sleep(1)       # sleep 5 sec
             
             mcu.usb_write(1, value=1)         # set end
