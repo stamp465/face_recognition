@@ -10,6 +10,7 @@ Servo myservo;
 #define RQ_SET_START 1
 #define RQ_GET_PW 2
 #define RQ_RESULT 3
+#define RQ_GET_START 4
 
 #define button_sw !(digitalRead(PIN_PB0)&&digitalRead(PIN_PB1)&&digitalRead(PIN_PB2)&&digitalRead(PIN_PB3))
 
@@ -104,7 +105,7 @@ usbMsgLen_t usbFunctionSetup(uint8_t data[8])
     }
     else if (rq->bRequest == RQ_SET_START){
         uint8_t set_st = rq->wValue.bytes[0];
-        if (set_st == 1){
+        if (set_st == 1 && set_start == 0 ){
             set_start = 1; 
             state = 1;
         }
@@ -160,7 +161,11 @@ usbMsgLen_t usbFunctionSetup(uint8_t data[8])
         
         return 0;
     }
-
+    else if (rq->bRequest == RQ_GET_START){
+        
+        usbMsgPtr = (uint8_t*) &set_start;
+        return 1;
+    }
     return 0;
 }
 
@@ -170,6 +175,7 @@ void reset_password(){
       password_notsubmit[i]=0;
       password[i]=0;
     }
+    noww = 0;
 }
 
 void setup()
@@ -218,27 +224,31 @@ void loop()
                 password[noww] = 3;
                 noww ++;
                 //digitalWrite(PIN_PC0,1);
-                while(!digitalRead(PIN_PB0));
+                while(!digitalRead(PIN_PB0))
+                  usbPoll();
                 //digitalWrite(PIN_PC0,0);
             }
             else if(!digitalRead(PIN_PB1) && noww < pass_length ){ //if B pressed and password not full
                 password[noww] = 4;
                 noww ++;
                 //digitalWrite(PIN_PC1,1);
-                while(!digitalRead(PIN_PB1));
+                while(!digitalRead(PIN_PB1))
+                  usbPoll();
                 //digitalWrite(PIN_PC1,0);
             }
             else if(!digitalRead(PIN_PB2) && noww > 0){ //if B pressed and password not full
                 password[noww-1] = 0;
                 noww --;
                 //digitalWrite(PIN_PC1,1);
-                while(!digitalRead(PIN_PB2));
+                while(!digitalRead(PIN_PB2))
+                  usbPoll();
                 //digitalWrite(PIN_PC1,0);
             }
             else if(!digitalRead(PIN_PB3) ){ //if ENTER pressed and password is full
                 submit=true;
                 //digitalWrite(PIN_PC2,1);
-                while(!digitalRead(PIN_PB3));
+                while(!digitalRead(PIN_PB3))
+                  usbPoll();
                 //digitalWrite(PIN_PC2,0);
             }
             print_password();
@@ -254,15 +264,20 @@ void loop()
             state = 22;
         }
         else if(state==22 && millis() - savetime > 1000){
-            print_door(true);
+            print_door(door);
+            state = 222;
+        }
+        else if(state==222 && millis() - savetime > 8000){
+            door = false;
+            print_door(door);
             state = -1;
         }
-        else if( millis() - savetime > 8000){
-                state = 0;
-                set_start = 0;
-            }
+        else if( millis() - savetime > 11000){
+            state = 0;
+            set_start = 0;
+            reset_password();
         }
-    
+    }
     else{
         
         if(state == 0){

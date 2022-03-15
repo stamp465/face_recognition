@@ -56,6 +56,13 @@ face_names = []
 process_this_frame = True
 
 while True:
+
+    start_tt = mcu.usb_read(4, length=1)
+    if start_tt[0] == 2 :
+        print("open door")
+        time.sleep(1)
+        continue
+
     # Grab a single frame of video
     ret, frame = video_capture.read()
 
@@ -114,11 +121,11 @@ while True:
                 if read_hardware_password == "0000" :
                     pass
                 elif read_hardware_password == "4444" :
-                    print("FUCK")
+                    print("Is TRUE")
                     mcu.usb_write(3, value=1) 
                     break
                 else :
-                    print("SIAO")
+                    print("Is False")
                     mcu.usb_write(3, value=0) 
                 
                 time.sleep(1)       # sleep 5 sec
