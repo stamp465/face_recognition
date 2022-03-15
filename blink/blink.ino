@@ -5,35 +5,30 @@
 
 LiquidCrystal_I2C lcd(0x27,16,2);
 Servo myservo;
-#define pass_length 4
+#define pass_length 10
+
 #define RQ_SET_LED 0
 #define RQ_SET_START 1
 #define RQ_GET_PW 2
 #define RQ_RESULT 3
-#define RQ_GET_START 4
+#define RQ_GET_START_STATUS 4
 
-#define button_sw !(digitalRead(PIN_PB0)&&digitalRead(PIN_PB1)&&digitalRead(PIN_PB2)&&digitalRead(PIN_PB3))
+#define button_sw !(digitalRead(PIN_PB0)&&digitalRead(PIN_PB1)&&digitalRead(PIN_PB2)&&digitalRead(PIN_PB3)&&digitalRead(PIN_PB4)&&digitalRead(PIN_PB5))
 
 uint8_t password[pass_length];
 uint8_t password_notsubmit[pass_length];
-int noww = 0;
+int size_now = 0;
 int set_start = 0;
+int old_result = 0;
+int state = -1;
 bool submit = false;
 bool door = false;
 bool waiting = false;
 static uint8_t pw = 0;
 static uint8_t n_pw = 0;
-int old_result = 0;
-int state = -1;
+
 unsigned long savetime;
 
-
-void delay_eiei(int period){
-    int last_time = millis();
-    while( millis() - last_time > period) {
-                
-    }
-}
 
 void print_start(){
   lcd.clear();
@@ -52,9 +47,15 @@ void print_door(bool status){
   lcd.setCursor(0,1);
   if(status){
     lcd.print("Open Door");
+    /*
+    servo ....
+    */
   }
   else if(!status){
     lcd.print("Close Door");
+    /*
+    servo ....
+    */
   }
     
 }
@@ -62,26 +63,18 @@ void print_door(bool status){
 void print_password(){
     lcd.clear();
     lcd.setCursor(0,0);
-    if(waiting){
-        lcd.print("Waiting Result");
-    }
+    if(waiting)     lcd.print("Waiting Result");
     else{
         if(!submit){
-            if(old_result==1){
-                lcd.print("Wrong, ");
-            }
+            if(old_result==1)   lcd.print("Wrong, ");
             lcd.print("Password :");
         }
-        else{
-            lcd.print(" Password Sent -->");
-        }
+        else    lcd.print(" Password Sent -->");
     }
     
-
-    
     int i;
-    for(i=0;i<noww;i++){
-        lcd.setCursor(i+1,1);
+    for(i=0;i<size_now;i++){
+        lcd.setCursor(i,1);
         if(password[i]!=0){
             lcd.print(password[i]);
         }
@@ -93,48 +86,42 @@ usbMsgLen_t usbFunctionSetup(uint8_t data[8])
     usbRequest_t *rq = (usbRequest_t *)data;
     static uint8_t switch_state[6];
 
-    if (rq->bRequest == RQ_SET_LED)
-    {
+    if (rq->bRequest == RQ_SET_LED){
         uint8_t led_val = rq->wValue.bytes[0];
         uint8_t led_no = rq->wIndex.bytes[0];
-
-        if (led_no == 0)
-            digitalWrite(PIN_PC2, led_val);
-        
-        return 0; // return no data back to host
+        //if (led_no == 0)    digitalWrite(PIN_PC2, led_val);
+        return 0; 
     }
     else if (rq->bRequest == RQ_SET_START){
-        uint8_t set_st = rq->wValue.bytes[0];
-        if (set_st == 1 && set_start == 0 ){
+        uint8_t if_face = rq->wValue.bytes[0];
+        if (if_face == 1 && set_start == 0 ){                // when see face and before status is close door
             set_start = 1; 
             state = 1;
         }
-        else if (set_st == 0 && set_start != 2){
+        /*else if (if_face == 0 && set_start != 2){            // when not see face and status is not open door
             set_start = 0; 
             state = 0;
-        }
-        return 0; // return no data back to host
+        }*/
+        return 0; 
     }
     else if (rq->bRequest == RQ_GET_PW){
+
+        // check all is zero ?
         int i;
         bool allnotZERO = false;
-        for(i=0;i<pass_length;i++){
-            if(password[i]!=0){
-                allnotZERO = true;
-            }
-        }
-        if(submit && !waiting && allnotZERO){
+        for(i=0;i<pass_length;i++)  if(password[i]!=0)  allnotZERO = true;
+
+        if(submit && !waiting && allnotZERO){       // when submit and not waiting for result and all is not zero
             usbMsgPtr = (uint8_t*) &password;
-            //submit = false;
             waiting = true;
             print_password();
         }
-        else if(submit && !allnotZERO){
+        else if(submit && !allnotZERO){             // when submit and all is zero --- ignore waiting
             submit = false;
             usbMsgPtr = (uint8_t*) &password_notsubmit;
             print_password();
         }
-        else{
+        else{                                       // when not submit ( python call all time )
             usbMsgPtr = (uint8_t*) &password_notsubmit;
         }
         return sizeof(password);
@@ -155,14 +142,10 @@ usbMsgLen_t usbFunctionSetup(uint8_t data[8])
                 state = 2;
                 old_result = 0;
             }
-            
         }
-        
-        
         return 0;
     }
-    else if (rq->bRequest == RQ_GET_START){
-        
+    else if (rq->bRequest == RQ_GET_START_STATUS){
         usbMsgPtr = (uint8_t*) &set_start;
         return 1;
     }
@@ -175,19 +158,23 @@ void reset_password(){
       password_notsubmit[i]=0;
       password[i]=0;
     }
-    noww = 0;
+    size_now = 0;
 }
 
 void setup()
 {
+
+    pinMode(PIN_PC0,OUTPUT);
+    pinMode(PIN_PC1,OUTPUT);
     pinMode(PIN_PC2,OUTPUT);
+
     pinMode(PIN_PB0,INPUT_PULLUP);
     pinMode(PIN_PB1,INPUT_PULLUP);
     pinMode(PIN_PB2,INPUT_PULLUP);
     pinMode(PIN_PB3,INPUT_PULLUP);
-    pinMode(PIN_PC1,OUTPUT);
-    pinMode(PIN_PC0,OUTPUT);
-    //myservo.attach(PIN_PB0);
+    pinMode(PIN_PB4,INPUT_PULLUP);
+    pinMode(PIN_PB5,INPUT_PULLUP);
+    myservo.attach(PIN_PD6);
     //myservo.write(0);
 
     lcd.init();  //initialize the lcd
@@ -218,38 +205,41 @@ void loop()
         }
         usbPoll();
         if(button_sw){
-            //digitalWrite(PIN_PD3, HIGH); //remove this line when lcd prompt
-            //delay(5); //remove this line when lcd prompt
-            if(!digitalRead(PIN_PB0) && noww < pass_length ){ //if A pressed and password not full
-                password[noww] = 3;
-                noww ++;
-                //digitalWrite(PIN_PC0,1);
+            if(!digitalRead(PIN_PB0) && size_now < pass_length ){           //if 3 pressed and password not full of screen
+                password[size_now] = 3;
+                size_now ++;
                 while(!digitalRead(PIN_PB0))
                   usbPoll();
-                //digitalWrite(PIN_PC0,0);
             }
-            else if(!digitalRead(PIN_PB1) && noww < pass_length ){ //if B pressed and password not full
-                password[noww] = 4;
-                noww ++;
-                //digitalWrite(PIN_PC1,1);
+            else if(!digitalRead(PIN_PB1) && size_now < pass_length ){      //if 4 pressed and password not full of screen
+                password[size_now] = 5;
+                size_now ++;
                 while(!digitalRead(PIN_PB1))
                   usbPoll();
-                //digitalWrite(PIN_PC1,0);
             }
-            else if(!digitalRead(PIN_PB2) && noww > 0){ //if B pressed and password not full
-                password[noww-1] = 0;
-                noww --;
-                //digitalWrite(PIN_PC1,1);
+            else if(!digitalRead(PIN_PB2) && size_now < pass_length ){      //if 4 pressed and password not full of screen
+                password[size_now] = 7;
+                size_now ++;
                 while(!digitalRead(PIN_PB2))
                   usbPoll();
-                //digitalWrite(PIN_PC1,0);
             }
-            else if(!digitalRead(PIN_PB3) ){ //if ENTER pressed and password is full
-                submit=true;
-                //digitalWrite(PIN_PC2,1);
+            else if(!digitalRead(PIN_PB3) && size_now < pass_length ){      //if 4 pressed and password not full of screen
+                password[size_now] = 9;
+                size_now ++;
                 while(!digitalRead(PIN_PB3))
                   usbPoll();
-                //digitalWrite(PIN_PC2,0);
+            }
+            
+            else if(!digitalRead(PIN_PB5) && size_now > 0){                 //backspace if have password in screen
+                password[size_now-1] = 0;
+                size_now --;
+                while(!digitalRead(PIN_PB5))
+                  usbPoll();
+            }
+            else if(!digitalRead(PIN_PB4) ){                                //if ENTER
+                submit=true;
+                while(!digitalRead(PIN_PB4))
+                  usbPoll();
             }
             print_password();
         }
