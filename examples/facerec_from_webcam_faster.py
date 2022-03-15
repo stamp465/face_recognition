@@ -115,12 +115,13 @@ while True:
                 read_hardware_password = ""
                 print(tmp)
                 for i in tmp:
-                    read_hardware_password = read_hardware_password + str(i)
+                    if str(i) != "0" :
+                        read_hardware_password = read_hardware_password + str(i)
                 print(read_hardware_password)
 
-                if read_hardware_password == "0000" :
+                if read_hardware_password == "" :
                     pass
-                elif read_hardware_password == "4444" :
+                elif read_hardware_password == "3579" :
                     print("Is TRUE")
                     mcu.usb_write(3, value=1) 
                     break
