@@ -51,7 +51,7 @@ void print_door(bool status)
     if (status)
     {
         lcd.print("Open Door");
-        myservo.write(90);
+        myservo.write(60);
     }
     else if (!status)
     {
@@ -236,7 +236,7 @@ void loop()
                 lcd.clear();
                 lcd.setCursor(0, 0);
                 lcd.print("Sent ERROR");
-                lcd.setCursor(0, 1);
+                lcd.setCursor(1, 0);
                 lcd.print("Please sent again");
                 time_w = millis();
             }
